@@ -38,6 +38,7 @@ The Bixi station CSV is comprised of the following information:
 
 Trip and Bixi station data from 2014 to 2019 will be utilized.
 
+<br>
 
 ## Methods and Technologies
 
