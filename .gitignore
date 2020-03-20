@@ -1,0 +1,5 @@
+# IDE and Editor
+.vscode
+
+# Data files
+/data/*
