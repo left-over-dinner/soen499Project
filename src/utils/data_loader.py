@@ -2,7 +2,6 @@ import os
 from functools import reduce
 from pyspark.sql import DataFrame
 
-
 def get_bixi_data(spark, data_directory):
     trip_histories = []
 
@@ -30,4 +29,15 @@ def get_bixi_data(spark, data_directory):
             trip_histories.append(combined_df.drop('start_station_code', 'end_station_code'))
 
     trip_histories_df = reduce(DataFrame.unionAll, trip_histories)
+    
+    trip_histories_df = trip_histories_df \
+        .withColumn('start_date', trip_histories_df.start_date.cast('date')) \
+        .withColumn('end_date', trip_histories_df.end_date.cast('date')) \
+        .withColumn('duration_sec', trip_histories_df.duration_sec.cast('integer')) \
+        .withColumn('is_member', trip_histories_df.is_member.cast('integer')) \
+        .withColumn('start_latitude', trip_histories_df.start_latitude.cast('double')) \
+        .withColumn('start_longitude', trip_histories_df.start_longitude.cast('double')) \
+        .withColumn('end_latitude', trip_histories_df.end_latitude.cast('double')) \
+        .withColumn('end_longitude', trip_histories_df.end_longitude.cast('double'))
+
     return trip_histories_df
