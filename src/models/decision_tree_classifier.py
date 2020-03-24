@@ -4,7 +4,7 @@ from pyspark.ml.feature import IndexToString, StringIndexer, VectorIndexer, Vect
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class DecisionTreeClassifier:
-    FEATURE_COLUMNS = ['indexed_start_name', 'is_member','hour','day_of_week']
+    FEATURE_COLUMNS = ['indexed_start_name', 'hour','day_of_week']
     
     def train_model(self, data):
         # Convert start station names to numerical value
