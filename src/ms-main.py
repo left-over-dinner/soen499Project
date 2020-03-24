@@ -1,7 +1,7 @@
 from pyspark.sql import SparkSession
 from utils.data_loader import get_bixi_data
 
-from models.random_forest_classifier import RandomForestClassifier
+from models.decision_tree_classifier import DecisionTreeClassifier
 
 
 def init_spark():
@@ -18,7 +18,6 @@ if __name__ == '__main__':
 
     spark = init_spark()
     data = get_bixi_data(spark, DATA_DIRECTORY)
-    data.select(['year','month', 'day_of_month', 'day_of_week','hour']).show()
-    exit(0)
-    random_forest_classifier = RandomForestClassifier()
-    random_forest_classifier.train_model(data)
+    #print(data.select('start_name').distinct().count())
+    decision_tree_classifier = DecisionTreeClassifier()
+    decision_tree_classifier.train_model(data)
