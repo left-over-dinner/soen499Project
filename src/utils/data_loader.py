@@ -5,6 +5,7 @@ from pyspark.sql.functions import year, month, dayofmonth, dayofweek, hour
 
 def get_bixi_data(spark, data_directory):
     trip_histories = []
+    stations = []
 
     with os.scandir(data_directory) as entries:
         for entry in entries:
@@ -29,29 +30,30 @@ def get_bixi_data(spark, data_directory):
 
             #start_date split into different columns
             adjusted_df = combined_df \
-                .withColumn('year', year('start_date')) \
                 .withColumn('month', month('start_date')) \
-                .withColumn('day_of_month', dayofmonth('start_date')) \
                 .withColumn('day_of_week', dayofweek('start_date')) \
                 .withColumn('hour', hour('start_date'))
 
-            trip_histories.append(adjusted_df.drop('start_station_code', 'end_station_code'))
+            trip_histories.append(adjusted_df.drop('start_station_code', 'end_station_code', 'duration_sec'))
+            stations.append(stations_df.drop('code'))
 
     trip_histories_df = reduce(DataFrame.unionAll, trip_histories)
+    all_stations_df = reduce(DataFrame.unionAll, stations).distinct()
     
     trip_histories_df = trip_histories_df \
         .withColumn('start_date', trip_histories_df.start_date.cast('date')) \
         .withColumn('end_date', trip_histories_df.end_date.cast('date')) \
-        .withColumn('duration_sec', trip_histories_df.duration_sec.cast('integer')) \
         .withColumn('is_member', trip_histories_df.is_member.cast('integer')) \
         .withColumn('start_latitude', trip_histories_df.start_latitude.cast('double')) \
         .withColumn('start_longitude', trip_histories_df.start_longitude.cast('double')) \
         .withColumn('end_latitude', trip_histories_df.end_latitude.cast('double')) \
         .withColumn('end_longitude', trip_histories_df.end_longitude.cast('double')) \
-        .withColumn('year', trip_histories_df.year.cast('integer')) \
         .withColumn('month', trip_histories_df.month.cast('integer')) \
-        .withColumn('day_of_month', trip_histories_df.day_of_month.cast('integer')) \
         .withColumn('day_of_week', trip_histories_df.day_of_week.cast('integer')) \
         .withColumn('hour', trip_histories_df.hour.cast('integer'))
 
-    return trip_histories_df
+    all_stations_df = all_stations_df \
+        .withColumn('longitude', all_stations_df.longitude.cast('double')) \
+        .withColumn('latitude', all_stations_df.latitude.cast('double'))
+
+    return trip_histories_df, all_stations_df
