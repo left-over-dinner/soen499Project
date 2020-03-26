@@ -3,3 +3,7 @@
 
 # Data files
 /data/*
+
+# Python
+__pycache__/
+*.pyc
