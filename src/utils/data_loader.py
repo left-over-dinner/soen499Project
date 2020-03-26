@@ -1,7 +1,7 @@
 import os
 from functools import reduce
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import year, month, dayofmonth, dayofweek, hour
+from pyspark.sql.functions import month, dayofweek, hour, monotonically_increasing_id 
 
 def get_bixi_data(spark, data_directory):
     trip_histories = []
@@ -41,6 +41,7 @@ def get_bixi_data(spark, data_directory):
     all_stations_df = reduce(DataFrame.unionAll, stations).distinct()
     
     trip_histories_df = trip_histories_df \
+        .withColumn('id', monotonically_increasing_id()) \
         .withColumn('start_date', trip_histories_df.start_date.cast('date')) \
         .withColumn('end_date', trip_histories_df.end_date.cast('date')) \
         .withColumn('is_member', trip_histories_df.is_member.cast('integer')) \
