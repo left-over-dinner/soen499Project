@@ -4,17 +4,10 @@ from pyspark.ml.feature import IndexToString, StringIndexer, VectorIndexer, Vect
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class RandomForestClassifier:
-    # FEATURE_COLUMNS = ['indexed_start_name', 'month', 'day_of_week', 'hour']
     FEATURE_COLUMNS = ['start_cluster', 'month', 'day_of_week', 'hour']
     NUM_TREES = 10
 
-    def train_model(self, data):
-        # Number of unique stations
-        # num_stations = data.select('start_name').distinct().count()
-
-        # Convert start station names to numerical value
-        # data = StringIndexer(inputCol='start_name', outputCol='indexed_start_name').fit(data).transform(data)
-        
+    def train_model(self, data):        
         # Create features vector from multiple columns
         assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features')
         data_with_features_column = assembler.transform(data)

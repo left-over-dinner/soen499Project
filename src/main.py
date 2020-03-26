@@ -37,6 +37,9 @@ if __name__ == '__main__':
     clustered_stations = cluster_stations(stations)
     data = combine_clusters_with_trips(trip_data, clustered_stations)
 
+    print('\nDistribution of clusters:')
+    data.groupBy('end_cluster').count().orderBy('count').show()
+
     print('\n------Classifying data with Random Forest Classifier------')
     random_forest_classifier = RandomForestClassifier()
     random_forest_classifier.train_model(data)
