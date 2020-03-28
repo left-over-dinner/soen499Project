@@ -31,19 +31,23 @@ def get_bixi_data(spark, data_directory):
                 .join(start_stations_df, 'start_station_code') \
                 .join(end_stations_df, 'end_station_code')
 
-            #start_date split into different columns
-            adjusted_df = combined_df \
-                .withColumn('month', month('start_date')) \
-                .withColumn('day_of_week', dayofweek('start_date')) \
-                .withColumn('hour', hour('start_date'))
-
-            trip_histories.append(adjusted_df.drop('start_station_code', 'end_station_code', 'duration_sec'))
+            trip_histories.append(combined_df.drop('start_station_code', 'end_station_code', 'duration_sec'))
             stations.append(stations_df.drop('code'))
 
     trip_histories_df = reduce(DataFrame.unionAll, trip_histories)
     all_stations_df = reduce(DataFrame.unionAll, stations).distinct()
     
+    # Split start_date into different features
     trip_histories_df = trip_histories_df \
+        .orderBy('start_date') \
+        .withColumn('id', monotonically_increasing_id()) \
+        .withColumn('month', month('start_date')) \
+        .withColumn('day_of_week', dayofweek('start_date')) \
+        .withColumn('hour', hour('start_date')) \
+
+    # Cast row columns to appropriate types
+    trip_histories_df = trip_histories_df \
+        .orderBy('start_date') \
         .withColumn('id', monotonically_increasing_id()) \
         .withColumn('start_date', trip_histories_df.start_date.cast('date')) \
         .withColumn('end_date', trip_histories_df.end_date.cast('date')) \
@@ -52,9 +56,6 @@ def get_bixi_data(spark, data_directory):
         .withColumn('start_longitude', trip_histories_df.start_longitude.cast('double')) \
         .withColumn('end_latitude', trip_histories_df.end_latitude.cast('double')) \
         .withColumn('end_longitude', trip_histories_df.end_longitude.cast('double')) \
-        .withColumn('month', trip_histories_df.month.cast('integer')) \
-        .withColumn('day_of_week', trip_histories_df.day_of_week.cast('integer')) \
-        .withColumn('hour', trip_histories_df.hour.cast('integer'))
 
     all_stations_df = all_stations_df \
         .withColumn('longitude', all_stations_df.longitude.cast('double')) \
