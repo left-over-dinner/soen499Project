@@ -11,7 +11,7 @@ def get_bixi_data(spark, data_directory):
         for entry in entries:
             if entry.path.endswith('DS_Store'):
                 continue
-            
+
             trips_df = spark.read.csv(f'{entry.path}/OD*.csv', header=True, mode='DROPMALFORMED')
             stations_df = spark.read.csv(f'{entry.path}/Station*.csv', header=True, mode='DROPMALFORMED')
 
