@@ -1,5 +1,7 @@
+import math
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import lit
+from pyspark.sql.functions import udf
+from pyspark.sql.types import FloatType
 from utils.clustering import cluster_stations
 from utils.data_loader import get_bixi_data
 
@@ -13,6 +15,16 @@ def init_spark():
         .config('spark.executor.memory', '4g') \
         .getOrCreate()
     return spark
+
+def transform_time_features(trips_df, spark):
+    hour_sin_udf = udf(lambda hour: math.sin(2 * math.pi * hour / 23), FloatType())
+    hour_cos_udf = udf(lambda hour: math.cos(2 * math.pi * hour / 23), FloatType())
+    
+    new_trips_df = trips_df \
+        .withColumn('hour_sin', hour_sin_udf('hour')) \
+        .withColumn('hour_cos', hour_cos_udf('hour'))
+
+    return new_trips_df
 
 def combine_clusters_with_trips(trip_data, clustered_stations):
     clusters = clustered_stations.select(['name', 'prediction'])
@@ -32,6 +44,8 @@ if __name__ == '__main__':
 
     spark = init_spark()
     trip_data, stations = get_bixi_data(spark, DATA_DIRECTORY)
+
+    trip_data = transform_time_features(trip_data, spark)
 
     print('\n------Clustering stations------')
     clustered_stations = cluster_stations(stations)
