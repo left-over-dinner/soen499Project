@@ -4,22 +4,19 @@ from pyspark.ml.feature import IndexToString, StringIndexer, VectorIndexer, Vect
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class DecisionTreeClassifier:
-    FEATURE_COLUMNS = ['indexed_start_name', 'hour','day_of_week']
+    FEATURE_COLUMNS = ['start_cluster', 'month', 'day_of_week']
+    NUM_TREES = 10
     
     def train_model(self, data, unique_stations_count):
-        # Convert start station names to numerical value
-        data = StringIndexer(inputCol='start_name', outputCol='indexed_start_name').fit(data).transform(data)
         
         # Create features vector from multiple columns
         assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features')
         data_with_features_column = assembler.transform(data)
 
-        label_indexer = StringIndexer(inputCol='end_name', outputCol='indexed_end_name').fit(data_with_features_column)
         feature_indexer = VectorIndexer(inputCol='features', outputCol='indexed_features').fit(data_with_features_column)
-        decision_tree = DTC(labelCol='indexed_end_name', featuresCol='indexed_features', maxBins=unique_stations_count)
-        label_converter = IndexToString(inputCol='prediction', outputCol='predicted_end_name', labels=label_indexer.labels)
+        decision_tree = DTC(labelCol='end_cluster', featuresCol='indexed_features', maxBins=unique_stations_count)
 
-        pipeline = Pipeline(stages=[label_indexer, feature_indexer, decision_tree, label_converter])
+        pipeline = Pipeline(stages=[feature_indexer, decision_tree])
 
         train_set, test_set = data_with_features_column.randomSplit([0.8, 0.2])
 
@@ -29,10 +26,20 @@ class DecisionTreeClassifier:
         predictions = model.transform(test_set)
 
         # Determine accuracy of the model
-        evaluator = MulticlassClassificationEvaluator(labelCol='indexed_end_name', predictionCol='prediction', metricName='accuracy')
+        evaluator = MulticlassClassificationEvaluator(labelCol='end_cluster', predictionCol='prediction', metricName='accuracy')
+        evaluator.setMetricName('accuracy')
         accuracy = evaluator.evaluate(predictions)
-        print(f'Accuracy: {accuracy}')
 
-        # Display summary
-        summary = model.stages[2]
-        print(summary)
+        evaluator.setMetricName('weightedPrecision')
+        precision = evaluator.evaluate(predictions)
+
+        evaluator.setMetricName('weightedRecall')
+        recall = evaluator.evaluate(predictions)
+
+        evaluator.setMetricName('f1')
+        f1 = evaluator.evaluate(predictions)
+    
+        print(f'Accuracy: {accuracy}')
+        print(f'Precision: {precision}')
+        print(f'Recall: {recall}')
+        print(f'F1-Score: {f1}')

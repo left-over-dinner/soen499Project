@@ -5,6 +5,7 @@ from pyspark.ml.evaluation import RegressionEvaluator
 
 class DecisionTreeRegression:
     FEATURE_COLUMNS = ['indexed_start_name', 'hour','day_of_week']
+    NUM_TREES = 10
 
     def train_model(self, data, unique_stations_count):
         data = StringIndexer(inputCol='start_name', outputCol='indexed_start_name').fit(data).transform(data)

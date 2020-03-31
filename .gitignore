@@ -3,9 +3,11 @@
 
 # Data files
 /data/20*
+/data/Bixi*
 
 # Python
 __pycache__/
 *.pyc
 
 src/ms-main.py
+src/ms/*
