@@ -1,15 +1,41 @@
 import os
 from functools import reduce
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import month, dayofweek, hour, monotonically_increasing_id 
+from pyspark.sql.functions import year, month, dayofmonth, dayofweek, hour, monotonically_increasing_id 
 
 def get_bixi_data(spark, data_directory):
+    weather_df = load_weather_data(spark, data_directory)
+    trip_histories_df, all_stations_df = load_bixi_data(spark, data_directory)
+
+    trip_histories_df = combine_weather_with_trip_histories(trip_histories_df, weather_df)
+
+    trip_histories_df = trip_histories_df \
+        .withColumn('id', monotonically_increasing_id()) \
+        .withColumn('start_date', trip_histories_df.start_date.cast('date')) \
+        .withColumn('end_date', trip_histories_df.end_date.cast('date')) \
+        .withColumn('is_member', trip_histories_df.is_member.cast('integer')) \
+        .withColumn('start_latitude', trip_histories_df.start_latitude.cast('float')) \
+        .withColumn('start_longitude', trip_histories_df.start_longitude.cast('float')) \
+        .withColumn('end_latitude', trip_histories_df.end_latitude.cast('float')) \
+        .withColumn('end_longitude', trip_histories_df.end_longitude.cast('float')) \
+        .withColumn('month', trip_histories_df.month.cast('integer')) \
+        .withColumn('day_of_week', trip_histories_df.day_of_week.cast('integer')) \
+        .withColumn('hour', trip_histories_df.hour.cast('integer')) \
+        .withColumn('temperature', trip_histories_df.temperature.cast('float'))
+
+    all_stations_df = all_stations_df \
+        .withColumn('longitude', all_stations_df.longitude.cast('float')) \
+        .withColumn('latitude', all_stations_df.latitude.cast('float'))
+
+    return trip_histories_df, all_stations_df
+
+def load_bixi_data(spark, data_directory):
     trip_histories = []
     stations = []
 
     with os.scandir(data_directory) as entries:
         for entry in entries:
-            if entry.path.endswith('DS_Store'):
+            if entry.path.endswith('DS_Store') or entry.name == 'weather':
                 continue
             
             trips_df = spark.read.csv(f'{entry.path}/OD*.csv', header=True, mode='DROPMALFORMED')
@@ -37,28 +63,38 @@ def get_bixi_data(spark, data_directory):
     trip_histories_df = reduce(DataFrame.unionAll, trip_histories)
     all_stations_df = reduce(DataFrame.unionAll, stations).distinct()
     
-    # Split start_date into different features
+    # Split start_date into different columns
     trip_histories_df = trip_histories_df \
         .orderBy('start_date') \
         .withColumn('id', monotonically_increasing_id()) \
         .withColumn('month', month('start_date')) \
         .withColumn('day_of_week', dayofweek('start_date')) \
         .withColumn('hour', hour('start_date')) \
-
-    # Cast row columns to appropriate types
-    trip_histories_df = trip_histories_df \
-        .orderBy('start_date') \
-        .withColumn('id', monotonically_increasing_id()) \
-        .withColumn('start_date', trip_histories_df.start_date.cast('date')) \
-        .withColumn('end_date', trip_histories_df.end_date.cast('date')) \
-        .withColumn('is_member', trip_histories_df.is_member.cast('integer')) \
-        .withColumn('start_latitude', trip_histories_df.start_latitude.cast('double')) \
-        .withColumn('start_longitude', trip_histories_df.start_longitude.cast('double')) \
-        .withColumn('end_latitude', trip_histories_df.end_latitude.cast('double')) \
-        .withColumn('end_longitude', trip_histories_df.end_longitude.cast('double')) \
-
-    all_stations_df = all_stations_df \
-        .withColumn('longitude', all_stations_df.longitude.cast('double')) \
-        .withColumn('latitude', all_stations_df.latitude.cast('double'))
+        .withColumn('year', year('start_date')) \
+        .withColumn('day_of_month', dayofmonth('start_date'))
 
     return trip_histories_df, all_stations_df
+
+def load_weather_data(spark, data_directory):
+    try:
+        weather_df = spark.read.csv(f'{data_directory}/weather/*.csv', header=True, mode='DROPMALFORMED')
+        return weather_df \
+            .select(['Year', 'Month', 'Day', 'Time', 'Temp (°C)', 'Weather']) \
+            .withColumn('hour', hour('Time')) \
+            .withColumnRenamed('Year', 'year') \
+            .withColumnRenamed('Month', 'month') \
+            .withColumnRenamed('Day', 'day_of_month') \
+            .withColumnRenamed('Temp (°C)', 'temperature') \
+            .withColumnRenamed('Weather', 'weather')
+
+    except:
+        print('No weather data found.')
+
+def combine_weather_with_trip_histories(trip_histories_df, weather_df):
+    trip_histories_df = trip_histories_df \
+        .join(weather_df, ['year', 'month', 'day_of_month', 'hour'])
+    
+    return trip_histories_df \
+        .drop('year') \
+        .drop('day_of_month') \
+        .drop('Time') \
