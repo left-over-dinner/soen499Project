@@ -6,7 +6,7 @@ from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 class DecisionTreeClassifier:
     FEATURE_COLUMNS = ['indexed_start_name', 'hour','day_of_week']
     
-    def train_model(self, data):
+    def train_model(self, data, unique_stations_count):
         # Convert start station names to numerical value
         data = StringIndexer(inputCol='start_name', outputCol='indexed_start_name').fit(data).transform(data)
         
@@ -16,7 +16,7 @@ class DecisionTreeClassifier:
 
         label_indexer = StringIndexer(inputCol='end_name', outputCol='indexed_end_name').fit(data_with_features_column)
         feature_indexer = VectorIndexer(inputCol='features', outputCol='indexed_features').fit(data_with_features_column)
-        decision_tree = DTC(labelCol='indexed_end_name', featuresCol='indexed_features', maxBins=754)
+        decision_tree = DTC(labelCol='indexed_end_name', featuresCol='indexed_features', maxBins=unique_stations_count)
         label_converter = IndexToString(inputCol='prediction', outputCol='predicted_end_name', labels=label_indexer.labels)
 
         pipeline = Pipeline(stages=[label_indexer, feature_indexer, decision_tree, label_converter])
