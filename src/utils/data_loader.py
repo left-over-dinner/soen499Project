@@ -57,19 +57,21 @@ def load_bixi_data(spark, data_directory):
                 .join(start_stations_df, 'start_station_code') \
                 .join(end_stations_df, 'end_station_code')
 
-            #start_date split into different columns
-            adjusted_df = combined_df \
-                .withColumn('month', month('start_date')) \
-                .withColumn('day_of_week', dayofweek('start_date')) \
-                .withColumn('hour', hour('start_date')) \
-                .withColumn('year', year('start_date')) \
-                .withColumn('day_of_month', dayofmonth('start_date'))
-
-            trip_histories.append(adjusted_df.drop('start_station_code', 'end_station_code', 'duration_sec'))
+            trip_histories.append(combined_df.drop('start_station_code', 'end_station_code', 'duration_sec'))
             stations.append(stations_df.drop('code'))
 
     trip_histories_df = reduce(DataFrame.unionAll, trip_histories)
     all_stations_df = reduce(DataFrame.unionAll, stations).distinct()
+    
+    # Split start_date into different columns
+    trip_histories_df = trip_histories_df \
+        .orderBy('start_date') \
+        .withColumn('id', monotonically_increasing_id()) \
+        .withColumn('month', month('start_date')) \
+        .withColumn('day_of_week', dayofweek('start_date')) \
+        .withColumn('hour', hour('start_date')) \
+        .withColumn('year', year('start_date')) \
+        .withColumn('day_of_month', dayofmonth('start_date'))
 
     return trip_histories_df, all_stations_df
 
