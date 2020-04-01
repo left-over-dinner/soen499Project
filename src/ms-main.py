@@ -20,8 +20,12 @@ if __name__ == '__main__':
     spark = init_spark()
     trip_history_data, all_station_data = get_bixi_data(spark, DATA_DIRECTORY)
     unique_stations_count = trip_history_data.select('start_name').distinct().count()
+    #transform time
+    trip_history_data = transform_time_features(trip_history_data, spark)
+    #stations to cluster
     clustered_stations = cluster_stations(all_station_data)
     trip_clustered_data = combine_clusters_with_trips(trip_history_data, clustered_stations)
+    #decision tree classfier
     decision_tree_classifier = DecisionTreeClassifier()
     decision_tree_classifier.train_model(trip_clustered_data,unique_stations_count)
     exit(0)

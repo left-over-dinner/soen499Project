@@ -4,7 +4,7 @@ from pyspark.ml.feature import VectorIndexer, VectorAssembler, StringIndexer
 from pyspark.ml.evaluation import RegressionEvaluator
 
 class DecisionTreeRegression:
-    FEATURE_COLUMNS = ['indexed_start_name', 'hour','day_of_week']
+    FEATURE_COLUMNS = ['indexed_start_name', 'hour_sin','hour_cos','day_of_week', 'month']
     NUM_TREES = 10
 
     def train_model(self, data, unique_stations_count):
