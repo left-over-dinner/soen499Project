@@ -18,10 +18,6 @@ def init_spark():
     spark = SparkSession.builder.appName("BIXI Predictor").getOrCreate()
     return spark
 
-# features_longitude = ['day_of_week', 'hour', 'duration_sec', 'start_longitude']
-# features_latitude = ['day_of_week', 'hour', 'duration_sec', 'start_latitude']
-# true_vals = ['end_latitude', 'end_longitude']
-
 hour_sin_udf = udf(lambda hour: math.sin(2 * math.pi * hour / 23), FloatType())
 hour_cos_udf = udf(lambda hour: math.cos(2 * math.pi * hour / 23), FloatType())
 
@@ -31,41 +27,6 @@ data = get_bixi_data(spark, DATA_DIRECTORY)[0]
 data = data \
     .withColumn('hour_sin', hour_sin_udf('hour')) \
     .withColumn('hour_cos', hour_cos_udf('hour'))
-
-# assembler = VectorAssembler(inputCols=features_longitude, outputCol='features')
-# data = assembler.transform(data)
-
-# # Automatically identify categorical features, and index them.
-# # Set maxCategories so features with > 4 distinct values are treated as continuous.
-# featureIndexer = VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(data)
-
-# # Split the data into training and test sets (30% held out for testing)
-# (trainingData, testData) = data.randomSplit([0.7, 0.3])
-
-# # Train a RandomForest model.
-# rf = RandomForestRegressor(featuresCol="indexedFeatures", labelCol="end_longitude")
-
-# # Chain indexer and forest in a Pipeline
-# pipeline = Pipeline(stages=[featureIndexer, rf])
-
-# # Train model.  This also runs the indexer.
-# model = pipeline.fit(trainingData)
-
-# Make predictions.
-# predictions = model.transform(testData)
-# print(predictions.show())
-
-# Select example rows to display.
-# predictions.select("prediction", "end_longitude", "features").show(5)
-
-# Select (prediction, true label) and compute test error
-# evaluator = RegressionEvaluator(labelCol="end_longitude", predictionCol="prediction", metricName="rmse")
-# rmse = evaluator.evaluate(predictions)
-# print("Root Mean Squared Error (RMSE) on test data = %g" % rmse)
-
-# rfModel = model.stages[1]
-# print(rfModel)  # summary only
-
 
 features_longitude = ['day_of_week', 'hour_sin', 'hour_cos', 'start_longitude']
 features_latitude = ['day_of_week', 'hour_sin', 'hour_cos', 'start_latitude']
@@ -133,8 +94,6 @@ for station in stations:
         color='#3186cc',
         fill=True
     ).add_to(montreal_map)
-
-# montreal_map.save('centroids.html')
 
 stations = results_compiled.take(500)
 for station in stations:
