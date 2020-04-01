@@ -1,8 +1,10 @@
 import folium
 import random
+import math
 
-from pyspark.sql import SparkSession
-from pyspark.sql import Row
+from pyspark.sql import SparkSession, Row
+from pyspark.sql.functions import udf
+from pyspark.sql.types import FloatType
 from pyspark.ml import Pipeline
 from pyspark.ml.regression import RandomForestRegressor
 from pyspark.ml.feature import VectorIndexer, VectorAssembler
@@ -20,8 +22,17 @@ def init_spark():
 # features_latitude = ['day_of_week', 'hour', 'duration_sec', 'start_latitude']
 # true_vals = ['end_latitude', 'end_longitude']
 
+hour_sin_udf = udf(lambda hour: math.sin(2 * math.pi * hour / 23), FloatType())
+hour_cos_udf = udf(lambda hour: math.cos(2 * math.pi * hour / 23), FloatType())
+
 spark = init_spark()
-data = get_bixi_data(spark, DATA_DIRECTORY)
+data = get_bixi_data(spark, DATA_DIRECTORY)[0]
+
+data = data \
+    .withColumn('hour_sin', hour_sin_udf('hour')) \
+    .withColumn('hour_cos', hour_cos_udf('hour'))
+
+print(data.show(20))
 
 # assembler = VectorAssembler(inputCols=features_longitude, outputCol='features')
 # data = assembler.transform(data)
@@ -58,12 +69,12 @@ data = get_bixi_data(spark, DATA_DIRECTORY)
 # print(rfModel)  # summary only
 
 
-features_longitude = ['day_of_week', 'hour', 'duration_sec', 'start_longitude']
-features_latitude = ['day_of_week', 'hour', 'duration_sec', 'start_latitude']
+features_longitude = ['day_of_week', 'hour_sin', 'hour_cos', 'start_longitude']
+features_latitude = ['day_of_week', 'hour_sin', 'hour_cos', 'start_latitude']
 
-stuff = data.select('end_longitude', 'end_latitude')
-true_vals = stuff.withColumn('longitude', stuff.end_longitude).withColumn('latitude', stuff.end_latitude)
-print(true_vals.show(10))
+stuff = data.select('end_longitude', 'end_latitude', 'id')
+true_vals = stuff.withColumn('actual_longitude', stuff.end_longitude).withColumn('actual_latitude', stuff.end_latitude)
+# print(true_vals.show(10))
 
 assembler = VectorAssembler(inputCols=features_longitude, outputCol='features')
 dataLongitude = assembler.transform(data)
@@ -81,25 +92,32 @@ model = pipeline.fit(trainingData)
 predictions_longitude = model.transform(testData)
 
 
-# assembler2 = VectorAssembler(inputCols=features_latitude, outputCol='features')
-# dataLatitude = assembler.transform(data)
+assembler2 = VectorAssembler(inputCols=features_latitude, outputCol='features')
+dataLatitude = assembler.transform(data)
 
-# featureIndexer2 = VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(dataLatitude)
+featureIndexer2 = VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(dataLatitude)
 
-# (trainingData2, testData2) = dataLatitude.randomSplit([0.7, 0.3])
+(trainingData2, testData2) = dataLatitude.randomSplit([0.7, 0.3])
 
-# rf2 = RandomForestRegressor(featuresCol="indexedFeatures", labelCol="end_latitude")
+rf2 = RandomForestRegressor(featuresCol="indexedFeatures", labelCol="end_latitude")
 
-# pipeline2 = Pipeline(stages=[featureIndexer2, rf2])
+pipeline2 = Pipeline(stages=[featureIndexer2, rf2])
 
-# model2 = pipeline2.fit(trainingData2)
+model2 = pipeline2.fit(trainingData2)
 
-# predictions_latitude = model2.transform(testData2)
+predictions_latitude = model2.transform(testData2)
 
-pred_long = predictions_longitude.select("prediction", "end_latitude")
-# pred_lat = predictions_latitude.select("prediction")
 
-predictions = pred_long.withColumn('longitude', pred_long.prediction).withColumn('latitude', pred_long.end_latitude)
+predictions_longitude = predictions_longitude.withColumn('predicted_longitude', predictions_longitude.prediction)
+predictions_latitude = predictions_latitude.withColumn('predicted_latitude', predictions_latitude.prediction)
+
+pred_long = predictions_longitude.select("predicted_longitude", "id")
+pred_lat = predictions_latitude.select("predicted_latitude", "id")
+
+predictions = pred_long.join(pred_lat, on=['id'])
+
+results_compiled = predictions.join(true_vals, on=['id']).rdd
+# predictions = pred_long.withColumn('longitude', pred_long.prediction).withColumn('latitude', pred_long.end_latitude)
 # predictions = pred_lat.withColumn('latitude', pred_lat.prediction)
 
 print(predictions.show(10))
@@ -112,24 +130,24 @@ montreal_map = folium.Map(
     tiles = 'CartoDB positron'
 )
 
-stations = true_vals.rdd.take(200)
+stations = results_compiled.take(200)
 for station in stations:
     folium.Circle(
-        location=[station.latitude, station.longitude],
+        location=[station.actual_latitude, station.actual_longitude],
         radius=2,
         color='#3186cc',
         fill=True
     ).add_to(montreal_map)
 
-montreal_map.save('centroids.html')
+# montreal_map.save('centroids.html')
 
-stations = predictions.rdd.take(200)
+stations = results_compiled.take(200)
 for station in stations:
     folium.Circle(
-        location=[station.latitude, station.longitude],
+        location=[station.predicted_latitude, station.predicted_longitude],
         radius=2,
         color='crimson',
         fill=True
     ).add_to(montreal_map)
 
-montreal_map.save('clusters.html')
+montreal_map.save('lat_long_random_forest_regression.html')
