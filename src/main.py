@@ -55,10 +55,10 @@ if __name__ == '__main__':
     print('\nDistribution of clusters:')
     data.groupBy('end_cluster').count().orderBy('count').show()
 
-    print('\n------Classifying data with Random Forest Classifier------')
+    print('\n------Training Random Forest Classifier------')
     random_forest_classifier = RandomForestClassifier()
     random_forest_classifier.train_model(data)
 
-    print('\n------Classifying data with Random Forest Regressor------')
+    print('\n------Training Random Forest Regressor------')
     random_forest_regressor = RandomForestRegression()
     random_forest_regressor.train_model(trip_data)
