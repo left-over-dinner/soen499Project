@@ -4,7 +4,10 @@ from pyspark.ml.feature import VectorIndexer, VectorAssembler, StringIndexer
 from pyspark.ml.evaluation import RegressionEvaluator
 
 class DecisionTreeRegression:
-    FEATURE_COLUMNS = ['indexed_start_name', 'hour_sin','hour_cos','day_of_week']
+    FEATURES_LONGITUDE = ['day_of_week', 'hour_sin', 'hour_cos', 'start_longitude']
+    FEATURES_LATITUDE = ['day_of_week', 'hour_sin', 'hour_cos', 'start_latitude']
+    DATASET_SPLIT = [0.8, 0.2]
+    VISUALIZE_DATAPOINTS = 500
 
     def train_model(self, data, unique_stations_count):
         data = StringIndexer(inputCol='start_name', outputCol='indexed_start_name').fit(data).transform(data)

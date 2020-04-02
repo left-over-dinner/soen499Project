@@ -7,9 +7,8 @@ from utils.clustering import cluster_stations
 from utils.data_loader import get_bixi_data
 
 from models.random_forest_classifier import RandomForestClassifier
-from models.random_forest_regression import RandomForestRegression
+from models.regression import RandomForestRegression, DecisionTreeRegression
 from models.decision_tree_classifier import DecisionTreeClassifier
-from models.decision_tree_regression import DecisionTreeRegression
 
 trip_data, stations = None, None
 clustered_data = None
@@ -50,19 +49,25 @@ def decision_tree_classification():
     decision_tree_classifier = DecisionTreeClassifier()
     decision_tree_classifier.train_model(clustered_data)
     pass
+
 def decision_tree_regressor():
-    print("Hello2")
+    print('\n------Training Decisition Tree Regression------')
+    decision_tree_regression = DecisionTreeRegression()
+    decision_tree_regression.train_model(trip_data)
     pass
+
 def random_forest_classification():
     print('\n------Training Random Forest Classifier------')
     random_forest_classifier = RandomForestClassifier()
     random_forest_classifier.train_model(clustered_data)
     pass
+
 def random_forest_regressor():
     print('\n------Training Random Forest Regressor------')
     random_forest_regressor = RandomForestRegression()
     random_forest_regressor.train_model(trip_data)
     pass
+
 #arguments via terminal
 methods = {
     "dtc":decision_tree_classification,
@@ -95,7 +100,7 @@ if __name__ == '__main__':
     print('\n------Transforming time features------')
     trip_data = transform_time_features(trip_data, spark)
     
-    # create clustering of station based on methods to run
+    # create clustering of stations based on methods to run
     if 'dtc' in methods_to_run or 'rfc' in methods_to_run:
         print('\n------Clustering stations------')
         clustered_stations = cluster_stations(stations)
