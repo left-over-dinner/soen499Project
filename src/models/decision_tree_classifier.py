@@ -4,16 +4,17 @@ from pyspark.ml.feature import IndexToString, StringIndexer, VectorIndexer, Vect
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class DecisionTreeClassifier:
+    
     FEATURE_COLUMNS = ['start_cluster', 'month', 'day_of_week','hour_sin', 'hour_cos']
     
-    def train_model(self, data, unique_stations_count):
-        
+    def train_model(self, data):
+    
         # Create features vector from multiple columns
         assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features')
         data_with_features_column = assembler.transform(data)
 
         feature_indexer = VectorIndexer(inputCol='features', outputCol='indexed_features').fit(data_with_features_column)
-        decision_tree = DTC(labelCol='end_cluster', featuresCol='indexed_features', maxBins=unique_stations_count)
+        decision_tree = DTC(labelCol='end_cluster', featuresCol='indexed_features')
 
         pipeline = Pipeline(stages=[feature_indexer, decision_tree])
 

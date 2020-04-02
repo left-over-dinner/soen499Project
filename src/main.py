@@ -8,6 +8,8 @@ from utils.data_loader import get_bixi_data
 
 from models.random_forest_classifier import RandomForestClassifier
 from models.random_forest_regression import RandomForestRegression
+from models.decision_tree_classifier import DecisionTreeClassifier
+from models.decision_tree_regression import DecisionTreeRegression
 
 trip_data, stations = None, None
 clustered_data = None
@@ -44,7 +46,9 @@ def combine_clusters_with_trips(trip_data, clustered_stations):
     return trip_data
 
 def decision_tree_classification():
-    print("Hello1")
+    print('\n------Training Decision Tree Classifier------')
+    decision_tree_classifier = DecisionTreeClassifier()
+    decision_tree_classifier.train_model(clustered_data)
     pass
 def decision_tree_regressor():
     print("Hello2")
@@ -59,13 +63,7 @@ def random_forest_regressor():
     random_forest_regressor = RandomForestRegression()
     random_forest_regressor.train_model(trip_data)
     pass
-
-def all_methods():
-    print("all")
-    for method_name in methods:
-        methods[method_name]()
-    pass
-
+#arguments via terminal
 methods = {
     "dtc":decision_tree_classification,
     "dtr":decision_tree_regressor,
@@ -75,17 +73,17 @@ methods = {
 
 if __name__ == '__main__':
     methods_to_run = None
-    #no argument provided, then run all methods
     if len(sys.argv) is 1:
+        # no argument provided, then run all methods
         # collect all method names to run
         methods_to_run = list(methods.keys())
     else:
-        #valid argument, collect method name, continue
+        # valid argument, collect method name, continue
         if sys.argv[1] in methods:
             methods_to_run = [sys.argv[1]]
-        #invalid argument, exit
+        # invalid argument, exit
         else:
-            print("invalid argument: ")
+            print("invalid argument:", sys.argv[1])
             exit(0)
 
     DATA_DIRECTORY = '../data'
