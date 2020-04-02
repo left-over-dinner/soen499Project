@@ -1,3 +1,4 @@
+import sys
 import math
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import udf
@@ -6,7 +7,10 @@ from utils.clustering import cluster_stations
 from utils.data_loader import get_bixi_data
 
 from models.random_forest_classifier import RandomForestClassifier
+from models.random_forest_regression import RandomForestRegression
 
+trip_data, stations = None, None
+clustered_data = None
 
 def init_spark():
     spark = SparkSession.builder \
@@ -39,21 +43,67 @@ def combine_clusters_with_trips(trip_data, clustered_stations):
 
     return trip_data
 
+def decision_tree_classification():
+    print("Hello1")
+    pass
+def decision_tree_regressor():
+    print("Hello2")
+    pass
+def random_forest_classification():
+    print('\n------Training Random Forest Classifier------')
+    random_forest_classifier = RandomForestClassifier()
+    random_forest_classifier.train_model(clustered_data)
+    pass
+def random_forest_regressor():
+    print('\n------Training Random Forest Regressor------')
+    random_forest_regressor = RandomForestRegression()
+    random_forest_regressor.train_model(trip_data)
+    pass
+
+def all_methods():
+    print("all")
+    for method_name in methods:
+        methods[method_name]()
+    pass
+
+methods = {
+    "dtc":decision_tree_classification,
+    "dtr":decision_tree_regressor,
+    "rfc":random_forest_classification,
+    "rfr":random_forest_regressor
+}
+
 if __name__ == '__main__':
+    methods_to_run = None
+    #no argument provided, then run all methods
+    if len(sys.argv) is 1:
+        # collect all method names to run
+        methods_to_run = list(methods.keys())
+    else:
+        #valid argument, collect method name, continue
+        if sys.argv[1] in methods:
+            methods_to_run = [sys.argv[1]]
+        #invalid argument, exit
+        else:
+            print("invalid argument: ")
+            exit(0)
+
     DATA_DIRECTORY = '../data'
 
     spark = init_spark()
+    print('\n------Loading data------')
     trip_data, stations = get_bixi_data(spark, DATA_DIRECTORY)
 
+    print('\n------Transforming time features------')
     trip_data = transform_time_features(trip_data, spark)
-
-    print('\n------Clustering stations------')
-    clustered_stations = cluster_stations(stations)
-    data = combine_clusters_with_trips(trip_data, clustered_stations)
-
-    print('\nDistribution of clusters:')
-    data.groupBy('end_cluster').count().orderBy('count').show()
-
-    print('\n------Classifying data with Random Forest Classifier------')
-    random_forest_classifier = RandomForestClassifier()
-    random_forest_classifier.train_model(data)
+    
+    # create clustering of station based on methods to run
+    if 'dtc' in methods_to_run or 'rfc' in methods_to_run:
+        print('\n------Clustering stations------')
+        clustered_stations = cluster_stations(stations)
+        clustered_data = combine_clusters_with_trips(trip_data, clustered_stations)
+        print('\nDistribution of clusters:')
+        clustered_data.groupBy('end_cluster').count().orderBy('count').show()
+    
+    for method_name in methods_to_run:
+        methods[method_name]()

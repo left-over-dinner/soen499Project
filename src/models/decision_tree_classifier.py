@@ -5,7 +5,6 @@ from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class DecisionTreeClassifier:
     FEATURE_COLUMNS = ['start_cluster', 'month', 'day_of_week','hour_sin', 'hour_cos']
-    NUM_TREES = 10
     
     def train_model(self, data, unique_stations_count):
         

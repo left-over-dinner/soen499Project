@@ -8,6 +8,12 @@
 # Python
 __pycache__/
 *.pyc
+<<<<<<< HEAD
 
 src/ms-main.py
 src/ms/*
+=======
+*.csv
+
+*.html
+>>>>>>> master
