@@ -6,6 +6,7 @@ from utils.clustering import cluster_stations
 from utils.data_loader import get_bixi_data
 
 from models.random_forest_classifier import RandomForestClassifier
+from models.random_forest_regression import RandomForestRegression
 
 
 def init_spark():
@@ -54,6 +55,10 @@ if __name__ == '__main__':
     print('\nDistribution of clusters:')
     data.groupBy('end_cluster').count().orderBy('count').show()
 
-    print('\n------Classifying data with Random Forest Classifier------')
+    print('\n------Training Random Forest Classifier------')
     random_forest_classifier = RandomForestClassifier()
     random_forest_classifier.train_model(data)
+
+    print('\n------Training Random Forest Regressor------')
+    random_forest_regressor = RandomForestRegression()
+    random_forest_regressor.train_model(trip_data)
