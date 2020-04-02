@@ -11,7 +11,7 @@ class RandomForestRegression:
     DATASET_SPLIT = [0.8, 0.2]
     VISUALIZE_DATAPOINTS = 500
 
-    def predict_feature(self, data, input_column, label_column):
+    def train_and_predict_feature(self, data, input_column, label_column):
         assembler = VectorAssembler(inputCols=input_column, outputCol='features')
         data = assembler.transform(data)
 
@@ -24,8 +24,8 @@ class RandomForestRegression:
 
         if label_column == 'end_longitude': 
             return model.transform(test_data).withColumnRenamed('prediction', 'predicted_longitude')
-        elif label_column == 'end_latitude':
-            return model.transform(test_data).withColumnRenamed('prediction', 'predicted_latitude')
+            
+        return model.transform(test_data).withColumnRenamed('prediction', 'predicted_latitude')
 
     def calculate_rmse(self, data, label_column, predicted_column):
         evaluator = RegressionEvaluator(labelCol=label_column, predictionCol=predicted_column, metricName="rmse")
@@ -34,8 +34,8 @@ class RandomForestRegression:
 
     def train_model(self, data):
         # Obtain predications for longitude and latitude
-        predictions_longitude = self.predict_feature(data, self.FEATURES_LONGITUDE, 'end_longitude')
-        predictions_latitude = self.predict_feature(data, self.FEATURES_LATITUDE, 'end_latitude')
+        predictions_longitude = self.train_and_predict_feature(data, self.FEATURES_LONGITUDE, 'end_longitude')
+        predictions_latitude = self.train_and_predict_feature(data, self.FEATURES_LATITUDE, 'end_latitude')
 
         # Calculate root mean squared error for predicted longitude and latitude respectively
         self.calculate_rmse(predictions_longitude, 'end_longitude', 'predicted_longitude')
