@@ -23,13 +23,14 @@ if __name__ == '__main__':
     #transform time
     trip_history_data = transform_time_features(trip_history_data, spark)
     #stations to cluster
-    clustered_stations = cluster_stations(all_station_data)
-    trip_clustered_data = combine_clusters_with_trips(trip_history_data, clustered_stations)
+    #clustered_stations = cluster_stations(all_station_data)
+    #trip_clustered_data = combine_clusters_with_trips(trip_history_data, clustered_stations)
     #decision tree classfier
-    decision_tree_classifier = DecisionTreeClassifier()
-    decision_tree_classifier.train_model(trip_clustered_data,unique_stations_count)
-    exit(0)
     decision_tree_regression = DecisionTreeRegression()
     decision_tree_regression.train_model(trip_history_data,unique_stations_count)
+    exit(0)
+    decision_tree_classifier = DecisionTreeClassifier()
+    decision_tree_classifier.train_model(trip_clustered_data,unique_stations_count)
+    
     
     
