@@ -48,25 +48,21 @@ def decision_tree_classification():
     print('\n------Training Decision Tree Classifier------')
     decision_tree_classifier = DecisionTreeClassifier()
     decision_tree_classifier.train_model(clustered_data)
-    pass
 
 def decision_tree_regressor():
     print('\n------Training Decisition Tree Regression------')
     decision_tree_regression = DecisionTreeRegression()
     decision_tree_regression.train_model(trip_data)
-    pass
 
 def random_forest_classification():
     print('\n------Training Random Forest Classifier------')
     random_forest_classifier = RandomForestClassifier()
     random_forest_classifier.train_model(clustered_data)
-    pass
 
 def random_forest_regressor():
     print('\n------Training Random Forest Regressor------')
     random_forest_regressor = RandomForestRegression()
     random_forest_regressor.train_model(trip_data)
-    pass
 
 #arguments via terminal
 methods = {

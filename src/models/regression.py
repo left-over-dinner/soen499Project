@@ -10,7 +10,7 @@ class Regression:
     FEATURES_LATITUDE = ['day_of_week', 'hour_sin', 'hour_cos', 'start_latitude']
     DATASET_SPLIT = [0.8, 0.2]
     VISUALIZE_DATAPOINTS = 500
-    regression_method, output_file_short_name = None, None
+    regression_model, output_file_short_name = None, None
 
     def train_and_predict_feature(self, data, input_column, label_column):
         assembler = VectorAssembler(inputCols=input_column, outputCol='features')
@@ -19,7 +19,7 @@ class Regression:
         feature_indexer = VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(data)
         (training_data, test_data) = data.randomSplit(self.DATASET_SPLIT)
 
-        regression = self.regression_method(featuresCol="indexedFeatures", labelCol=label_column)
+        regression = self.regression_model(featuresCol="indexedFeatures", labelCol=label_column)
         pipeline = Pipeline(stages=[feature_indexer, regression])
         model = pipeline.fit(training_data)
 
@@ -75,12 +75,10 @@ class Regression:
 
 class RandomForestRegression(Regression):
     def __init__(self):
-        self.regression_method = RandomForestRegressor
+        self.regression_model = RandomForestRegressor
         self.output_file_short_name = "random_forest"
-    pass
 
 class DecisionTreeRegression(Regression):
     def __init__(self):
-        self.regression_method = DecisionTreeRegressor
+        self.regression_model = DecisionTreeRegressor
         self.output_file_short_name = "decision_tree"
-    pass
