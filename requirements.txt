@@ -1,6 +1,7 @@
 # This file may be used to create an environment using:
 # $ conda create --name <env> --file <this file>
 # platform: win-64
+# use conda config --append channels conda-forge if some packages are not found when creating env
 blas=1.0=mkl
 branca=0.4.0=py_0
 ca-certificates=2019.11.28=hecc5488_0

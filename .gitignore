@@ -3,6 +3,7 @@
 
 # Data files
 /data/20*
+/data/Bixi*
 
 # Python
 __pycache__/

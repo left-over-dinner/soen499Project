@@ -5,7 +5,7 @@ from pyspark.ml.feature import IndexToString, StringIndexer, VectorIndexer, Vect
 
 def cluster_stations(data, k=10, seed=1):
     num_stations = data.select('name').distinct().count()
-    print(f'Clustering {num_stations} different stations.')
+    print(f'Clustering {num_stations} different stations')
 
     assembler = VectorAssembler(inputCols=['latitude', 'longitude'], outputCol='features')
     data_with_features = assembler.transform(data)
