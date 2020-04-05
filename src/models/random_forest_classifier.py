@@ -5,15 +5,14 @@ from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class RandomForestClassifier:
     FEATURE_COLUMNS = ['start_cluster', 'month', 'day_of_week', 'hour_sin', 'hour_cos']
-    NUM_TREES = 10
 
     def train_model(self, data):        
         # Create features vector from multiple columns
-        assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features')
+        assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features', handleInvalid='skip')
         data_with_features_column = assembler.transform(data)
 
         feature_indexer = VectorIndexer(inputCol='features', outputCol='indexed_features').fit(data_with_features_column)
-        random_forest = RFC(labelCol='end_cluster', featuresCol='indexed_features', numTrees=self.NUM_TREES)
+        random_forest = RFC(labelCol='end_cluster', featuresCol='indexed_features')
 
         pipeline = Pipeline(stages=[feature_indexer, random_forest])
 
