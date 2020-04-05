@@ -5,12 +5,12 @@ from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class DecisionTreeClassifier:
     
-    FEATURE_COLUMNS = ['start_cluster', 'month', 'day_of_week','hour_sin', 'hour_cos']
+    FEATURE_COLUMNS = ['start_cluster', 'month', 'day_of_week','hour_sin', 'hour_cos', 'temperature']
     
     def train_model(self, data):
     
         # Create features vector from multiple columns
-        assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features')
+        assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features', handleInvalid = 'skip')
         data_with_features_column = assembler.transform(data)
 
         feature_indexer = VectorIndexer(inputCol='features', outputCol='indexed_features').fit(data_with_features_column)

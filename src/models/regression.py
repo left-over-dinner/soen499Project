@@ -6,14 +6,14 @@ from pyspark.ml.feature import VectorIndexer, VectorAssembler
 from pyspark.ml.evaluation import RegressionEvaluator
 
 class Regression:
-    FEATURES_LONGITUDE = ['day_of_week', 'hour_sin', 'hour_cos', 'start_longitude']
-    FEATURES_LATITUDE = ['day_of_week', 'hour_sin', 'hour_cos', 'start_latitude']
+    FEATURES_LONGITUDE = ['day_of_week', 'month', 'hour_sin', 'hour_cos', 'start_longitude', 'temperature']
+    FEATURES_LATITUDE = ['day_of_week', 'month', 'hour_sin', 'hour_cos', 'start_latitude', 'temperature']
     DATASET_SPLIT = [0.8, 0.2]
     VISUALIZE_DATAPOINTS = 500
     regression_model, output_file_short_name = None, None
 
     def train_and_predict_feature(self, data, input_column, label_column):
-        assembler = VectorAssembler(inputCols=input_column, outputCol='features')
+        assembler = VectorAssembler(inputCols=input_column, outputCol='features', handleInvalid = 'skip')
         data = assembler.transform(data)
 
         feature_indexer = VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(data)
