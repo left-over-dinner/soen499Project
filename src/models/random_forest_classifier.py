@@ -4,15 +4,15 @@ from pyspark.ml.feature import IndexToString, StringIndexer, VectorIndexer, Vect
 from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class RandomForestClassifier:
-    FEATURE_COLUMNS = ['start_cluster', 'month', 'day_of_week', 'hour_sin', 'hour_cos', 'temperature']
+    FEATURE_COLUMNS = ['start_name', 'month', 'day_of_week', 'hour_sin', 'hour_cos']
 
     def train_model(self, data):        
         # Create features vector from multiple columns
-        assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features', handleInvalid='skip')
+        assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features')
         data_with_features_column = assembler.transform(data)
 
         feature_indexer = VectorIndexer(inputCol='features', outputCol='indexed_features').fit(data_with_features_column)
-        random_forest = RFC(labelCol='end_cluster', featuresCol='indexed_features')
+        random_forest = RFC(labelCol='end_name', featuresCol='indexed_features')
 
         pipeline = Pipeline(stages=[feature_indexer, random_forest])
 
@@ -25,7 +25,7 @@ class RandomForestClassifier:
         predictions = model.transform(test_set)
 
         # Output metrics
-        evaluator = MulticlassClassificationEvaluator(labelCol='end_cluster', predictionCol='prediction')
+        evaluator = MulticlassClassificationEvaluator(labelCol='end_name', predictionCol='prediction')
         evaluator.setMetricName('accuracy')
         accuracy = evaluator.evaluate(predictions)
 
