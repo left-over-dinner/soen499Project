@@ -5,20 +5,23 @@ from pyspark.ml.evaluation import MulticlassClassificationEvaluator
 
 class DecisionTreeClassifier:
     
-    FEATURE_COLUMNS = ['start_name', 'month', 'day_of_week','hour_sin', 'hour_cos']
+    FEATURE_COLUMNS = ['indexed_start_name', 'month', 'day_of_week', 'hour_sin', 'hour_cos']
     
     def train_model(self, data):
     
+        # Convert start station names to numerical value
+        data = StringIndexer(inputCol='start_name', outputCol='indexed_start_name').fit(data).transform(data)
+
         # Create features vector from multiple columns
         assembler = VectorAssembler(inputCols=self.FEATURE_COLUMNS, outputCol='features')
         data_with_features_column = assembler.transform(data)
 
+        label_indexer = StringIndexer(inputCol='end_name', outputCol='indexed_end_name').fit(data_with_features_column)
         feature_indexer = VectorIndexer(inputCol='features', outputCol='indexed_features').fit(data_with_features_column)
-        decision_tree = DTC(labelCol='end_name', featuresCol='indexed_features')
+        decision_tree = DTC(labelCol='indexed_end_name', featuresCol='indexed_features', maxBins=754)
+        label_converter = IndexToString(inputCol='prediction', outputCol='predicted_end_name', labels=label_indexer.labels)
 
-        pipeline = Pipeline(stages=[feature_indexer, decision_tree])
-
-        train_set, test_set = data_with_features_column.randomSplit([0.8, 0.2])
+        pipeline = Pipeline(stages=[label_indexer, feature_indexer, decision_tree, label_converter])
 
         # Train the model
         model = pipeline.fit(train_set)
