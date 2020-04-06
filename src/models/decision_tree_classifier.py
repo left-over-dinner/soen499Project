@@ -23,13 +23,15 @@ class DecisionTreeClassifier:
 
         pipeline = Pipeline(stages=[label_indexer, feature_indexer, decision_tree, label_converter])
 
+        train_set, test_set = data_with_features_column.randomSplit([0.8, 0.2])
+
         # Train the model
         model = pipeline.fit(train_set)
         # Make predictions
         predictions = model.transform(test_set)
 
         # Determine accuracy of the model
-        evaluator = MulticlassClassificationEvaluator(labelCol='end_name', predictionCol='prediction', metricName='accuracy')
+        evaluator = MulticlassClassificationEvaluator(labelCol='indexed_end_name', predictionCol='prediction')
         evaluator.setMetricName('accuracy')
         accuracy = evaluator.evaluate(predictions)
 
