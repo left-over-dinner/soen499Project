@@ -8,10 +8,14 @@ from functools import reduce
 from utils.clustering import cluster_stations
 from utils.data_loader import get_bixi_data
 
-from models.random_forest_classifier import RandomForestClassifier
+from models.classification import DecisionTreeClassifier, RandomForestClassifier
 from models.regression import RandomForestRegression, DecisionTreeRegression
-from models.decision_tree_classifier import DecisionTreeClassifier
 
+
+DATA_DIRECTORY = '../data'
+
+trip_data, stations = None, None
+clustered_data = None
 
 def init_spark():
     spark = SparkSession.builder \
@@ -93,20 +97,15 @@ METHODS = {
     "rfr": random_forest_regressor
 }
 
-DATA_DIRECTORY = '../data'
-
-trip_data, stations = None, None
-clustered_data = None
-
 if __name__ == '__main__':
     methods_to_run = None
     if len(sys.argv) == 1:
         # no argument provided, then run all methods
         # collect all method names to run
-        methods_to_run = list(methods.keys())
+        methods_to_run = list(METHODS.keys())
     else:
         # valid argument, collect method name, continue
-        if sys.argv[1] in methods:
+        if sys.argv[1] in METHODS:
             methods_to_run = [sys.argv[1]]
         # invalid argument, exit
         else:
@@ -130,4 +129,4 @@ if __name__ == '__main__':
         clustered_data = resample_data(clustered_data, 2)
     
     for method_name in methods_to_run:
-        methods[method_name]()
+        METHODS[method_name]()
