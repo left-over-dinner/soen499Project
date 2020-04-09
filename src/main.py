@@ -1,8 +1,10 @@
 import sys
 import math
-from pyspark.sql import SparkSession
+from pyspark.sql import SparkSession, DataFrame
 from pyspark.sql.functions import udf
 from pyspark.sql.types import FloatType
+from functools import reduce
+
 from utils.clustering import cluster_stations
 from utils.data_loader import get_bixi_data
 
@@ -43,6 +45,23 @@ def combine_clusters_with_trips(trip_data, clustered_stations):
         .drop('name')
 
     return trip_data
+
+def resample_data(trip_data, ratio=1):
+    class_distribution = trip_data.groupBy('end_cluster').count()
+
+    print('\nDistribution of clusters:')
+    class_distribution.orderBy('end_cluster').show()
+
+    class_distribution = class_distribution.orderBy('count').collect()
+    minority_class = class_distribution[0]
+    df_list = [trip_data.where(trip_data.end_cluster == c[0]).sample(False, min(minority_class[1] * ratio / c[1], 1.0)) for c in class_distribution]
+    
+    resampled = reduce(DataFrame.unionAll, df_list)
+    
+    print('\nResampled distribution of clusters:')
+    resampled.groupBy('end_cluster').count().orderBy('end_cluster').show()
+
+    return resampled
 
 def decision_tree_classification():
     print('\n------Training Decision Tree Classifier------')
@@ -101,8 +120,9 @@ if __name__ == '__main__':
         print('\n------Clustering stations------')
         clustered_stations = cluster_stations(stations)
         clustered_data = combine_clusters_with_trips(trip_data, clustered_stations)
-        print('\nDistribution of clusters:')
-        clustered_data.groupBy('end_cluster').count().orderBy('count').show()
+
+        print('\n------Resampling data------')
+        clustered_data = resample_data(clustered_data, 2)
     
     for method_name in methods_to_run:
         methods[method_name]()
