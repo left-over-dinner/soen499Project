@@ -9,7 +9,7 @@ from utils.clustering import cluster_stations
 from utils.data_loader import get_bixi_data
 
 from models.classification import DecisionTreeClassifier, RandomForestClassifier
-from models.regression import RandomForestRegression, DecisionTreeRegression
+from models.regression import RandomForestRegressor, DecisionTreeRegressor
 
 
 DATA_DIRECTORY = '../data'
@@ -73,9 +73,9 @@ def decision_tree_classification():
     decision_tree_classifier = DecisionTreeClassifier()
     decision_tree_classifier.train_model(clustered_data)
 
-def decision_tree_regressor():
-    print('\n------Training Decisition Tree Regression------')
-    decision_tree_regression = DecisionTreeRegression()
+def decision_tree_regression():
+    print('\n------Training Decisition Tree Regressor------')
+    decision_tree_regression = DecisionTreeRegressor()
     decision_tree_regression.train_model(trip_data)
 
 def random_forest_classification():
@@ -83,18 +83,18 @@ def random_forest_classification():
     random_forest_classifier = RandomForestClassifier()
     random_forest_classifier.train_model(clustered_data)
 
-def random_forest_regressor():
+def random_forest_regression():
     print('\n------Training Random Forest Regressor------')
-    random_forest_regressor = RandomForestRegression()
+    random_forest_regressor = RandomForestRegressor()
     random_forest_regressor.train_model(trip_data)
 
 
 # Arguments for terminal
 METHODS = {
-    "dtc": decision_tree_classification,
-    "dtr": decision_tree_regressor,
-    "rfc": random_forest_classification,
-    "rfr": random_forest_regressor
+    # "dtc": decision_tree_classification,
+    "dtr": decision_tree_regression,
+    # "rfc": random_forest_classification,
+    "rfr": random_forest_regression
 }
 
 if __name__ == '__main__':
