@@ -91,9 +91,9 @@ def random_forest_regression():
 
 # Arguments for terminal
 METHODS = {
-    # "dtc": decision_tree_classification,
+    "dtc": decision_tree_classification,
     "dtr": decision_tree_regression,
-    # "rfc": random_forest_classification,
+    "rfc": random_forest_classification,
     "rfr": random_forest_regression
 }
 
