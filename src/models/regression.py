@@ -33,8 +33,8 @@ def map_regression_predictions(results, output_file_name):
 
 
 class Regressor:
-    FEATURES_LONGITUDE = ['day_of_week', 'hour_sin', 'hour_cos', 'start_longitude']
-    FEATURES_LATITUDE = ['day_of_week', 'hour_sin', 'hour_cos', 'start_latitude']
+    FEATURES_LONGITUDE = ['month', 'day_of_week', 'hour_sin', 'hour_cos', 'start_longitude']
+    FEATURES_LATITUDE = ['month', 'day_of_week', 'hour_sin', 'hour_cos', 'start_latitude']
     DATASET_SPLIT = [0.8, 0.2]
     VISUALIZE_DATAPOINTS = 500
 
@@ -60,7 +60,7 @@ class Regressor:
         map_regression_predictions(results_compiled, self.output_file_short_name)
 
     def train_and_predict(self, data, input_column, label_column):
-        assembler = VectorAssembler(inputCols=input_column, outputCol='features')
+        assembler = VectorAssembler(inputCols=input_column, outputCol='features', handleInvalid='skip')
         data = assembler.transform(data)
 
         feature_indexer = VectorIndexer(inputCol="features", outputCol="indexedFeatures", maxCategories=4).fit(data)
