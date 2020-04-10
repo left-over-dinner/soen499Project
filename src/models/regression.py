@@ -5,6 +5,8 @@ from pyspark.ml.feature import VectorIndexer, VectorAssembler
 from pyspark.ml.evaluation import RegressionEvaluator
 
 
+VISUALIZE_DATAPOINTS = 500
+
 def map_regression_predictions(results, output_file_name):
     # Print results on a map of Montreal
     Montreal = [45.508154, -73.587450]
@@ -14,7 +16,7 @@ def map_regression_predictions(results, output_file_name):
         tiles = 'CartoDB positron'
     )
 
-    stations = results.take(self.VISUALIZE_DATAPOINTS)
+    stations = results.take(VISUALIZE_DATAPOINTS)
     for station in stations:
         folium.Circle(
             location=[station.actual_latitude, station.actual_longitude],
@@ -36,7 +38,6 @@ class Regressor:
     FEATURES_LONGITUDE = ['month', 'day_of_week', 'hour_sin', 'hour_cos', 'start_longitude']
     FEATURES_LATITUDE = ['month', 'day_of_week', 'hour_sin', 'hour_cos', 'start_latitude']
     DATASET_SPLIT = [0.8, 0.2]
-    VISUALIZE_DATAPOINTS = 500
 
     def __init__(self):
         self.regression_model = None
