@@ -8,9 +8,11 @@ from functools import reduce
 from utils.clustering import cluster_stations
 from utils.data_loader import get_bixi_data
 
-from models.random_forest_classifier import RandomForestClassifier
-from models.regression import RandomForestRegression, DecisionTreeRegression
-from models.decision_tree_classifier import DecisionTreeClassifier
+from models.classification import DecisionTreeClassifier, RandomForestClassifier
+from models.regression import RandomForestRegressor, DecisionTreeRegressor
+
+
+DATA_DIRECTORY = '../data'
 
 trip_data, stations = None, None
 clustered_data = None
@@ -24,6 +26,7 @@ def init_spark():
     return spark
 
 def transform_time_features(trips_df, spark):
+    """Encode cyclical hour feature"""
     hour_sin_udf = udf(lambda hour: math.sin(2 * math.pi * hour / 23), FloatType())
     hour_cos_udf = udf(lambda hour: math.cos(2 * math.pi * hour / 23), FloatType())
     
@@ -34,6 +37,7 @@ def transform_time_features(trips_df, spark):
     return new_trips_df
 
 def combine_clusters_with_trips(trip_data, clustered_stations):
+    """Assign each trip's start station to a cluster."""
     clusters = clustered_stations.select(['name', 'prediction'])
 
     trip_data = trip_data \
@@ -47,6 +51,7 @@ def combine_clusters_with_trips(trip_data, clustered_stations):
     return trip_data
 
 def resample_data(trip_data, ratio=1):
+    """Randomly undersample clusters relative to the minority cluster using the specified ratio."""
     class_distribution = trip_data.groupBy('end_cluster').count()
 
     print('\nDistribution of clusters:')
@@ -68,9 +73,9 @@ def decision_tree_classification():
     decision_tree_classifier = DecisionTreeClassifier()
     decision_tree_classifier.train_model(clustered_data)
 
-def decision_tree_regressor():
-    print('\n------Training Decisition Tree Regression------')
-    decision_tree_regression = DecisionTreeRegression()
+def decision_tree_regression():
+    print('\n------Training Decisition Tree Regressor------')
+    decision_tree_regression = DecisionTreeRegressor()
     decision_tree_regression.train_model(trip_data)
 
 def random_forest_classification():
@@ -78,35 +83,34 @@ def random_forest_classification():
     random_forest_classifier = RandomForestClassifier()
     random_forest_classifier.train_model(clustered_data)
 
-def random_forest_regressor():
+def random_forest_regression():
     print('\n------Training Random Forest Regressor------')
-    random_forest_regressor = RandomForestRegression()
+    random_forest_regressor = RandomForestRegressor()
     random_forest_regressor.train_model(trip_data)
 
-#arguments via terminal
-methods = {
-    "dtc":decision_tree_classification,
-    "dtr":decision_tree_regressor,
-    "rfc":random_forest_classification,
-    "rfr":random_forest_regressor
+
+# Arguments for terminal
+METHODS = {
+    "dtc": decision_tree_classification,
+    "dtr": decision_tree_regression,
+    "rfc": random_forest_classification,
+    "rfr": random_forest_regression
 }
 
 if __name__ == '__main__':
     methods_to_run = None
-    if len(sys.argv) is 1:
+    if len(sys.argv) == 1:
         # no argument provided, then run all methods
         # collect all method names to run
-        methods_to_run = list(methods.keys())
+        methods_to_run = list(METHODS.keys())
     else:
         # valid argument, collect method name, continue
-        if sys.argv[1] in methods:
+        if sys.argv[1] in METHODS:
             methods_to_run = [sys.argv[1]]
         # invalid argument, exit
         else:
             print("invalid argument:", sys.argv[1])
             exit(0)
-
-    DATA_DIRECTORY = '../data'
 
     spark = init_spark()
     print('\n------Loading data------')
@@ -115,7 +119,7 @@ if __name__ == '__main__':
     print('\n------Transforming time features------')
     trip_data = transform_time_features(trip_data, spark)
     
-    # create clustering of stations based on methods to run
+    # Cluster stations together if classification needs to be run
     if 'dtc' in methods_to_run or 'rfc' in methods_to_run:
         print('\n------Clustering stations------')
         clustered_stations = cluster_stations(stations)
@@ -125,4 +129,4 @@ if __name__ == '__main__':
         clustered_data = resample_data(clustered_data, 2)
     
     for method_name in methods_to_run:
-        methods[method_name]()
+        METHODS[method_name]()

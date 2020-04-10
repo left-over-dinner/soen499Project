@@ -18,6 +18,7 @@ def cluster_stations(data, k=10, seed=1):
 
 
 def map_stations(predictions, centers):
+    """Create Folium map of the clustered stations."""
     Montreal = [45.508154, -73.587450]
     montreal_map = folium.Map(
         location = Montreal,
@@ -27,17 +28,6 @@ def map_stations(predictions, centers):
 
     r = lambda: random.randint(0, 255)
     colors = ['#%02X%02X%02X' % (r(),r(),r()) for c in centers]
-
-    # Map cluster centroids
-    for center, color in zip(centers, colors):
-        folium.Circle(
-            location=center,
-            radius=10,
-            color=color,
-            fill=True
-        ).add_to(montreal_map)
-
-    montreal_map.save('centroids.html')
 
     stations = predictions.rdd.collect()
     for station in stations:

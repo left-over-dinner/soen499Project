@@ -4,11 +4,13 @@ from pyspark.sql import DataFrame
 from pyspark.sql.functions import year, month, dayofmonth, dayofweek, hour, monotonically_increasing_id 
 
 def get_bixi_data(spark, data_directory):
+    """Returns a tuple of a trip histories dataframe and a stations dataframe."""
     weather_df = load_weather_data(spark, data_directory)
     trip_histories_df, all_stations_df = load_bixi_data(spark, data_directory)
 
     trip_histories_df = combine_weather_with_trip_histories(trip_histories_df, weather_df)
 
+    # Add an ID to each trip and cast each row to proper types
     trip_histories_df = trip_histories_df \
         .withColumn('id', monotonically_increasing_id()) \
         .withColumn('start_date', trip_histories_df.start_date.cast('date')) \
@@ -30,10 +32,12 @@ def get_bixi_data(spark, data_directory):
     return trip_histories_df, all_stations_df
 
 def load_bixi_data(spark, data_directory):
+    """Read BIXI data from CSV files and return trip histories and stations."""
     trip_histories = []
     stations = []
 
     with os.scandir(data_directory) as entries:
+        # BIXI data needs to be processed year by year since station codes differ
         for entry in entries:
             if entry.path.endswith('DS_Store') or entry.name == 'weather':
                 continue
@@ -76,6 +80,7 @@ def load_bixi_data(spark, data_directory):
     return trip_histories_df, all_stations_df
 
 def load_weather_data(spark, data_directory):
+    """Read weather data from CSV files."""
     try:
         weather_df = spark.read.csv(f'{data_directory}/weather/*.csv', header=True, mode='DROPMALFORMED')
         return weather_df \
