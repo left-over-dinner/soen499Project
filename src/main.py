@@ -74,7 +74,7 @@ def decision_tree_classification():
     decision_tree_classifier.train_model(clustered_data)
 
 def decision_tree_regression():
-    print('\n------Training Decisition Tree Regressor------')
+    print('\n------Training Decision Tree Regressor------')
     decision_tree_regression = DecisionTreeRegressor()
     decision_tree_regression.train_model(trip_data)
 
